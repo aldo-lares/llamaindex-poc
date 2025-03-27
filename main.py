@@ -1,4 +1,6 @@
 import asyncio
+import os
+from dotenv import load_dotenv
 
 from llama_index.core.memory import ChatMemoryBuffer
 from llama_index.llms.azure_openai import AzureOpenAI
@@ -19,16 +21,24 @@ from agents import (
 
 async def main():
     """Main function to run the workflow."""
+    # Load environment variables from .env file
+    load_dotenv()
 
     from colorama import Fore, Style
 
-    # Replace OpenAI with AzureOpenAI
+    # Configure Azure OpenAI from environment variables
+    # Print values for debugging purposes (remove in production)
+    print("AZURE_OPENAI_ENGINE:", os.getenv("AZURE_OPENAI_ENGINE"))
+    print("AZURE_OPENAI_TEMPERATURE:", os.getenv("AZURE_OPENAI_TEMPERATURE"))
+    print("AZURE_OPENAI_ENDPOINT:", os.getenv("AZURE_OPENAI_ENDPOINT"))
+    print("AZURE_OPENAI_API_KEY:", os.getenv("AZURE_OPENAI_API_KEY"))
+    print("AZURE_OPENAI_API_VERSION:", os.getenv("AZURE_OPENAI_API_VERSION"))
     llm = AzureOpenAI(
-        engine="",  # This is required - use your actual Azure deployment name
-        temperature=0.4,
-        azure_endpoint="",  # Your Azure OpenAI endpoint
-        api_key="",  # Your Azure API key
-        api_version=""  # Or your appropriate API version
+        engine=os.getenv("AZURE_OPENAI_ENGINE"),  # e.g. "gpt-4" or your deployment name
+        temperature=float(os.getenv("AZURE_OPENAI_TEMPERATURE", "0.4")),
+        azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),  # Your Azure OpenAI endpoint
+        api_key=os.getenv("AZURE_OPENAI_API_KEY"),  # Your Azure API key
+        api_version=os.getenv("AZURE_OPENAI_API_VERSION")  # API version like "2023-05-15"
     )
     memory = ChatMemoryBuffer.from_defaults(llm=llm)
     initial_state = get_initial_state()
