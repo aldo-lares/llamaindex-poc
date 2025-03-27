@@ -3,7 +3,7 @@ import asyncio
 from llama_index.core.memory import ChatMemoryBuffer
 from llama_index.core.tools import BaseTool
 from llama_index.core.workflow import Context
-from llama_index.llms.openai import OpenAI
+from llama_index.llms.azure_openai import AzureOpenAI  # Changed from OpenAI to AzureOpenAI
 
 from workflow import (
     AgentConfig,
@@ -234,7 +234,14 @@ async def main():
 
     from colorama import Fore, Style
 
-    llm = OpenAI(model="gpt-4o", temperature=0.4)
+    # Replace OpenAI with AzureOpenAI
+    llm = AzureOpenAI(
+        engine="",  # This is required - use your actual Azure deployment name
+        temperature=0.4,
+        azure_endpoint="",  # Your Azure OpenAI endpoint
+        api_key="",  # Your Azure API key
+        api_version=""  # Or your appropriate API version
+    )
     memory = ChatMemoryBuffer.from_defaults(llm=llm)
     initial_state = get_initial_state()
     agent_configs = get_agent_configs()
