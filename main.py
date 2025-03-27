@@ -26,28 +26,28 @@ async def main():
 
     from colorama import Fore, Style
 
-    # Configure Azure OpenAI from environment variables
-    # Print values for debugging purposes (remove in production)
-    print("AZURE_OPENAI_ENGINE:", os.getenv("AZURE_OPENAI_ENGINE"))
-    print("AZURE_OPENAI_TEMPERATURE:", os.getenv("AZURE_OPENAI_TEMPERATURE"))
-    print("AZURE_OPENAI_ENDPOINT:", os.getenv("AZURE_OPENAI_ENDPOINT"))
-    print("AZURE_OPENAI_API_KEY:", os.getenv("AZURE_OPENAI_API_KEY"))
-    print("AZURE_OPENAI_API_VERSION:", os.getenv("AZURE_OPENAI_API_VERSION"))
+    
+    # Check if O1-mini configuration exists
+    if os.getenv("AZURE_OPENAI_O1_MINI_ENGINE"):
+        print(f"O1-MINI Configuration found ({os.getenv('AZURE_OPENAI_O1_MINI_ENGINE')}). Deep thinking capabilities enabled.")
+    else:
+        print(f"WARNING: O1-MINI Configuration not found. Deep thinking will use standard model: {os.getenv('AZURE_OPENAI_ENGINE')}")
+    
+    # Initialize primary LLM
     llm = AzureOpenAI(
-        engine=os.getenv("AZURE_OPENAI_ENGINE"),  # e.g. "gpt-4" or your deployment name
+        engine=os.getenv("AZURE_OPENAI_ENGINE"),
         temperature=float(os.getenv("AZURE_OPENAI_TEMPERATURE", "0.4")),
-        azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),  # Your Azure OpenAI endpoint
-        api_key=os.getenv("AZURE_OPENAI_API_KEY"),  # Your Azure API key
-        api_version=os.getenv("AZURE_OPENAI_API_VERSION")  # API version like "2023-05-15"
+        azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+        api_key=os.getenv("AZURE_OPENAI_API_KEY"),
+        api_version=os.getenv("AZURE_OPENAI_API_VERSION")
     )
+    
     memory = ChatMemoryBuffer.from_defaults(llm=llm)
     initial_state = get_initial_state()
     agent_configs = get_agent_configs()
     workflow = ConciergeAgent(timeout=None)
 
-    # draw a diagram of the workflow
-    # draw_all_possible_flows(workflow, filename="workflow.html")
-
+    # Interactive chat loop
     handler = workflow.run(
         user_msg="Hello!",
         agent_configs=agent_configs,
@@ -66,6 +66,11 @@ async def main():
                 )
                 print(event.tool_name)
                 print(event.tool_kwargs)
+                
+                # Special handling for deep thinking operations
+                if event.tool_name == "deep_thinking_epic_definition":
+                    print(Fore.YELLOW + "\nThis is a deep thinking operation using the o1-mini model." + Style.RESET_ALL)
+                    print(Fore.YELLOW + "It will perform extensive analysis on the epic requirements." + Style.RESET_ALL)
                 print()
 
                 approved = input("Do you approve? (y/n): ")
@@ -90,7 +95,11 @@ async def main():
                         )
                     )
             elif isinstance(event, ProgressEvent):
-                print(Fore.GREEN + f"SYSTEM >> {event.msg}" + Style.RESET_ALL)
+                # Special handling for deep thinking progress events
+                if "deep thinking" in event.msg.lower():
+                    print(Fore.MAGENTA + f"DEEP THINKING >> {event.msg}" + Style.RESET_ALL)
+                else:
+                    print(Fore.GREEN + f"SYSTEM >> {event.msg}" + Style.RESET_ALL)
 
         result = await handler
         print(Fore.BLUE + f"AGENT >> {result['response']}" + Style.RESET_ALL)
